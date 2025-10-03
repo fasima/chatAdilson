@@ -1,13 +1,22 @@
+const input = document.getElementById("user-input");
+const messagesDiv = document.getElementById("messages");
+
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") sendMessage();
+});
+
 async function sendMessage() {
-  const input = document.getElementById("user-input");
   const message = input.value.trim();
   if (!message) return;
 
-  addMessage("You", message);
+  addMessage("You", message, "user");
   input.value = "";
 
-  // Replace this with your n8n webhook URL
+  // Replace with your real webhook
   const webhookUrl = "https://chat.n8nfasima.uk/webhook/app";
+
+  // Show typing indicator
+  const typingEl = addMessage("Bot", "…", "bot", true);
 
   try {
     const response = await fetch(webhookUrl, {
@@ -16,16 +25,21 @@ async function sendMessage() {
       body: JSON.stringify({ message })
     });
     const data = await response.json();
-    addMessage("Bot", data.output || JSON.stringify(data));
+
+    // Replace typing indicator
+    typingEl.remove();
+    addMessage("Bot", data.output || JSON.stringify(data), "bot");
   } catch (err) {
-    addMessage("Error", err.toString());
+    typingEl.remove();
+    addMessage("Error", err.toString(), "bot");
   }
 }
 
-function addMessage(sender, text) {
-  const messagesDiv = document.getElementById("messages");
+function addMessage(sender, text, type, isTyping = false) {
   const msg = document.createElement("div");
-  msg.textContent = `${sender}: ${text}`;
+  msg.classList.add("message", type);
+  msg.textContent = isTyping ? "Bot is typing…" : text;
   messagesDiv.appendChild(msg);
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  return msg;
 }
